@@ -1,7 +1,7 @@
 {
     inputs = { } ;
     outputs =
-        { self } :
+        { self } @module :
             {
                 lib =
                     {
