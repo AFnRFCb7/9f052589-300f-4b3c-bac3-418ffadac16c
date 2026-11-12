@@ -235,13 +235,13 @@
                                                                                         type = lib.types.package ;
                                                                                     } ;
                                                                         } ;
-                                                                } ;
-                                                            personal =
-                                                                {
-                                                                    number-of-checks = lib.mkOption { default = 13 ; type = lib.types.int ; } ;
-                                                                    organization = lib.mkOption { default = "AFnRFCb7" ; type = lib.types.str ; } ;
-                                                                    repository = lib.mkOption { default = "personal" ; type = lib.types.str ; } ;
-                                                                    timeout = lib.mkOption { default = 60 * 60 ; type = lib.types.int ; } ;
+                                                                    personal =
+                                                                        {
+                                                                            number-of-checks = lib.mkOption { default = 13 ; type = lib.types.int ; } ;
+                                                                            organization = lib.mkOption { default = "AFnRFCb7" ; type = lib.types.str ; } ;
+                                                                            repository = lib.mkOption { default = "personal" ; type = lib.types.str ; } ;
+                                                                            timeout = lib.mkOption { default = 60 * 60 ; type = lib.types.int ; } ;
+                                                                        } ;
                                                                 } ;
                                                         } ;
                                                 } ;
