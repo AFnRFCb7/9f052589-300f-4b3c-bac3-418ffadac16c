@@ -173,7 +173,6 @@
                                                                                                                                         time timeout ${ builtins.toString config.promoter.personal.timeout } nix build "${ "$" }{OVERRIDES[@]}" --show-trace ".#checks.x86_64-linux.check-$CHECK"
                                                                                                                                     done
                                                                                                                                     time timeout ${ builtins.toString config.promoter.personal.timeout } nix flake check --show-trace "${ "$" }{OVERRIDES[@]}"
-                                                                                                                                    nixos-rebuild switch --flake .#myhost
                                                                                                                                 '' ;
                                                                                                                         }
                                                                                                                 )
