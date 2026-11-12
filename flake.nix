@@ -67,6 +67,7 @@
                                                                                                 {
                                                                                                     mounts =
                                                                                                         {
+                                                                                                            dot-ssh = { type = "temporary" ; } ;
                                                                                                             work = { type = "temporary" ; } ;
                                                                                                         } ;
                                                                                                     name = "promote" ;
@@ -169,9 +170,9 @@
                                                                                                                                     git submodule foreach 'detect-overrides'
                                                                                                                                     for (( CHECK=1; CHECK<=NUMBER_OF_CHECKS; CHECK++ ))
                                                                                                                                     do
-                                                                                                                                        time timeout ${ config.promoter.personal.timeout } nix build "${ "$" }{OVERRIDES[@]}" --show-trace ".#checks.x86_64-linux.check-$CHECK"
+                                                                                                                                        time timeout ${ builtins.toString config.promoter.personal.timeout } nix build "${ "$" }{OVERRIDES[@]}" --show-trace ".#checks.x86_64-linux.check-$CHECK"
                                                                                                                                     done
-                                                                                                                                    time timeout ${ config.promoter.personal.timeout } nix flake check --show-trace "${ "$" }{OVERRIDES[@]}"
+                                                                                                                                    time timeout ${ builtins.toString config.promoter.personal.timeout } nix flake check --show-trace "${ "$" }{OVERRIDES[@]}"
                                                                                                                                     nixos-rebuild switch --flake .#myhost
                                                                                                                                 '' ;
                                                                                                                         }
@@ -182,7 +183,16 @@
                                                                                                             cd /mounts/work
                                                                                                             git init
                                                                                                             git remote add origin "github.com:${ config.promoter.personal.organization }/${ config.promoter.personal.repository }.git"
+                                                                                                            cat ${ config.promoter.personal.committer.key } > /mounts/dot-ssh/identity.asc
+                                                                                                            chmod 0400 /mounts/dot-ssh/identity.asc
+                                                                                                            export GIT_SSH_COMMAND="${ pkgs.openssh }/bin/ssh -i /mounts/dot-ssh/identity.asc" -o StrictHostKeyChecking=no"
+                                                                                                            git config user.email "${ config.promoter.personal.committer.email }"
+                                                                                                            git config user.name "${ config.promoter.personal.committer.name }"
                                                                                                             git fetch origin main
+                                                                                                            git submodule update --init --recursive
+                                                                                                            git submodule foreach 'git config core.sshCommand "${ config.promoter.actions.ssh }/bin/ssh"'
+                                                                                                            git submodule foreach 'git config user.email "${ config.promoter.personal.committer.email }"'
+                                                                                                            git submodule foreach 'git config user.name "${ config.promoter.personal.committer.name }"'
                                                                                                             while IFS= read -r REF
                                                                                                             do
                                                                                                                 process-candidate "$REF"
@@ -234,9 +244,11 @@
                                                                                                 } ;
                                                                                         type = lib.types.package ;
                                                                                     } ;
-                                                                        } ;
                                                                     personal =
                                                                         {
+                                                                            email = lib.mkOption { default = "emory.merryman@gmail.com" ; type = lib.types.str ; } ;
+                                                                            key = lib.mkOption { type = lib.types.path ; } ;
+                                                                            name = lib.mkOption { default = "Emory Merryman" ; type = lib.types.str ; } ;
                                                                             number-of-checks = lib.mkOption { default = 13 ; type = lib.types.int ; } ;
                                                                             organization = lib.mkOption { default = "AFnRFCb7" ; type = lib.types.str ; } ;
                                                                             repository = lib.mkOption { default = "personal" ; type = lib.types.str ; } ;
