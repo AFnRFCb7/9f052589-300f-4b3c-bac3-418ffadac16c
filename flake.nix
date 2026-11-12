@@ -247,9 +247,12 @@
                                                                         } ;
                                                                     personal =
                                                                         {
-                                                                            email = lib.mkOption { default = "emory.merryman@gmail.com" ; type = lib.types.str ; } ;
-                                                                            key = lib.mkOption { type = lib.types.path ; } ;
-                                                                            name = lib.mkOption { default = "Emory Merryman" ; type = lib.types.str ; } ;
+                                                                            committer =
+                                                                                {
+                                                                                    email = lib.mkOption { default = "emory.merryman@gmail.com" ; type = lib.types.str ; } ;
+                                                                                    key = lib.mkOption { type = lib.types.path ; } ;
+                                                                                    name = lib.mkOption { default = "Emory Merryman" ; type = lib.types.str ; } ;
+                                                                                } ;
                                                                             number-of-checks = lib.mkOption { default = 13 ; type = lib.types.int ; } ;
                                                                             organization = lib.mkOption { default = "AFnRFCb7" ; type = lib.types.str ; } ;
                                                                             repository = lib.mkOption { default = "personal" ; type = lib.types.str ; } ;
