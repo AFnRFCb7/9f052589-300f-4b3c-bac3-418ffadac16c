@@ -183,11 +183,6 @@
                                                                                                             git init
                                                                                                             git remote add origin "github.com:${ config.promoter.personal.organization }/${ config.promoter.personal.repository }.git"
                                                                                                             git fetch origin main
-                                                                                                            git fetch origin 'candidate/*'
-                                                                                                            cd /mounts/work
-                                                                                                            git init
-                                                                                                            git remote add origin "git@github.com:${ config.promoter.personal.organization }/${ config.promoter.personal.repository }.git"
-                                                                                                            git fetch origin 'candidate/*'
                                                                                                             while IFS= read -r REF
                                                                                                             do
                                                                                                                 process-candidate "$REF"
