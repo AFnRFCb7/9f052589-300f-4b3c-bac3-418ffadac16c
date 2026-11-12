@@ -244,6 +244,7 @@
                                                                                                 } ;
                                                                                         type = lib.types.package ;
                                                                                     } ;
+                                                                        } ;
                                                                     personal =
                                                                         {
                                                                             email = lib.mkOption { default = "emory.merryman@gmail.com" ; type = lib.types.str ; } ;
