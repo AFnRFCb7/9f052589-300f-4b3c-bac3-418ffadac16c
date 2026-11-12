@@ -10,7 +10,7 @@
                     } :
                         let
                             implementation =
-                                { ... } :
+                                { config , lib , pkgs , ... } :
                                     let
                                         identified =
                                             if builtins.typeOf input == "lambda" then input module
@@ -25,6 +25,40 @@
                                                                 {
                                                                     actions =
                                                                         {
+                                                                            restore =
+                                                                                lib.mkOption
+                                                                                    {
+                                                                                        default =
+                                                                                            config.lazy-shell-application
+                                                                                                {
+                                                                                                    mounts = { } ;
+                                                                                                    name = "restore" ;
+                                                                                                    post = [ ] ;
+                                                                                                    runtime-inputs =
+                                                                                                        { pkgs , ... } :
+                                                                                                            [
+                                                                                                                pkgs.git
+                                                                                                                (
+                                                                                                                    pkgs.writeShellApplication
+                                                                                                                        {
+                                                                                                                            name = "restore" ;
+                                                                                                                            runtimeInputs = [ pkgs.git ] ;
+                                                                                                                            text =
+                                                                                                                                ''
+                                                                                                                                    git fetch origin main
+                                                                                                                                    git checkout origin/main
+                                                                                                                                '' ;
+                                                                                                                        }
+                                                                                                                )
+                                                                                                            ] ;
+                                                                                                    text =
+                                                                                                        ''
+                                                                                                            git submodule foreach 'restore'
+                                                                                                        '' ;
+                                                                                                    variables = { } ;
+                                                                                                } ;
+                                                                                        type = lib.types.package ;
+                                                                                    } ;
                                                                             post =
                                                                                 lib.mkOption
                                                                                     {
@@ -138,6 +172,7 @@
                                                                                                                                         time timeout ${ config.promoter.personal.timeout } nix build "${ "$" }{OVERRIDES[@]}" --show-trace ".#checks.x86_64-linux.check-$CHECK"
                                                                                                                                     done
                                                                                                                                     time timeout ${ config.promoter.personal.timeout } nix flake check --show-trace "${ "$" }{OVERRIDES[@]}"
+                                                                                                                                    nixos-rebuild switch --flake .#myhost
                                                                                                                                 '' ;
                                                                                                                         }
                                                                                                                 )
