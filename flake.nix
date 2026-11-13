@@ -190,6 +190,7 @@
                                                                                                             git config user.name "${ config.promoter.personal.committer.name }"
                                                                                                             git fetch origin main
                                                                                                             git submodule update --init --recursive
+                                                                                                            # shellcheck disable=SC2016
                                                                                                             git submodule foreach 'git config core.sshCommand "$GIT_SSH_COMMAND"'
                                                                                                             git submodule foreach 'git config user.email "${ config.promoter.personal.committer.email }"'
                                                                                                             git submodule foreach 'git config user.name "${ config.promoter.personal.committer.name }"'
