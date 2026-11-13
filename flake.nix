@@ -152,6 +152,7 @@
                                                                                                                                                     ''
                                                                                                                                                         if ! git diff --quiet origin/main HEAD
                                                                                                                                                         then
+                                                                                                                                                            # shellcheck disable=SC2154
                                                                                                                                                             echo "$name"
                                                                                                                                                         fi
                                                                                                                                                     '' ;
