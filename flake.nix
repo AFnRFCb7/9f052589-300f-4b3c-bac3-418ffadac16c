@@ -107,19 +107,19 @@
                                                                                                                                                                             then
                                                                                                                                                                                 if git push origin HEAD:main
                                                                                                                                                                                 then
-                                                                                                                                                                                    UUID="$(  cat /dev/urandom | tr -dc '0-9' | fold -w 16 | head --lines 1 )" || failure 1962589628164118
+                                                                                                                                                                                    UUID="$( tr -dc '0-9' < /dev/urandom | fold -w 16 | head --lines 1 )" || failure 1962589628164118
                                                                                                                                                                                     git checkout -b "success/$UUID"
                                                                                                                                                                                     git push origin "success/$UUID"
                                                                                                                                                                                     git push origin --delete "$REF"
                                                                                                                                                                                 else
-                                                                                                                                                                                    UUID="$(  cat /dev/urandom | tr -dc '0-9' | fold -w 16 | head --lines 1 )" || failure 0387526746530622
+                                                                                                                                                                                    UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 0387526746530622
                                                                                                                                                                                     git checkout -b "rejected/$UUID"
                                                                                                                                                                                     git push origin "rejected/$UUID"
                                                                                                                                                                                     git push origin --delete "$REF"
                                                                                                                                                                                 fi
                                                                                                                                                                             elif git diff --quiet origin/main HEAD
                                                                                                                                                                             then
-                                                                                                                                                                                UUID="$(  cat /dev/urandom | tr -dc '0-9' | fold -w 16 | head --lines 1 )" || failure 3801835872555108
+                                                                                                                                                                                UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 3801835872555108
                                                                                                                                                                                 git checkout -b "duplicate/$UUID"
                                                                                                                                                                                 git push origin "duplicate/$UUID"
                                                                                                                                                                                 git push origin --delete "$REF"
@@ -135,7 +135,7 @@
                                                                                                                                                         then
                                                                                                                                                             git submodule foreach 'promote'
                                                                                                                                                         else
-                                                                                                                                                            UUID="$(  cat /dev/urandom | tr -dc '0-9' | fold -w 16 | head --lines 1 )" || failure 9910674273434369
+                                                                                                                                                            UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 9910674273434369
                                                                                                                                                             git checkout -b "failure/$UUID"
                                                                                                                                                             git push origin "failure/$UUID"
                                                                                                                                                             git push origin --delete "$REF"
@@ -224,7 +224,7 @@
                                                                                                                                     git fetch origin main
                                                                                                                                     if ! git diff --quiet origin/main HEAD
                                                                                                                                     then
-                                                                                                                                        UUID="$( cat /dev/urandom | tr -dc '0-9' | fold -w 16 | head --lines 1 )" || failure 9910674273434369
+                                                                                                                                        UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 9910674273434369
                                                                                                                                         git checkout -b "candidate/$UUID"
                                                                                                                                         git reset --soft origin/main
                                                                                                                                         git commit -a --verbose
