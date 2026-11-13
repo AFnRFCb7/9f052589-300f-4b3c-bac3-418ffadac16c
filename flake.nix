@@ -185,7 +185,7 @@
                                                                                                             git remote add origin "github.com:${ config.promoter.personal.organization }/${ config.promoter.personal.repository }.git"
                                                                                                             cat ${ config.promoter.personal.committer.key } > /mounts/dot-ssh/identity.asc
                                                                                                             chmod 0400 /mounts/dot-ssh/identity.asc
-                                                                                                            export GIT_SSH_COMMAND="${ pkgs.openssh }/bin/ssh -i /mounts/dot-ssh/identity.asc -o StrictHostKeyChecking=no"
+                                                                                                            export GIT_SSH_COMMAND="${ pkgs.openssh }/bin/ssh -i /mounts/dot-ssh/identity.asc -o StrictHostKeyChecking=no -o User=git"
                                                                                                             git config user.email "${ config.promoter.personal.committer.email }"
                                                                                                             git config user.name "${ config.promoter.personal.committer.name }"
                                                                                                             git fetch origin main
