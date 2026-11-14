@@ -53,17 +53,13 @@
                             system = system ;
                         }
                         {
-                            # android-application = android-application ;
                             failure = failure ;
                             lazy-shell-application = lazy-shell-application ;
                             lazy-shell-resource = lazy-shell-resource ;
-                            # portal = portal ;
                             promoter = promoter ;
-                            # sally = sally ;
                             sequential = sequential ;
                             tree-serialization = tree-serialization ;
                             trip = trip ;
-                            # trump5000 = trump5000 ;
                             visa = visa ;
                             visitor = visitor ;
                             wrap = wrap ;
@@ -73,11 +69,6 @@
                     import nixpkgs
                         {
                             system = system;
-                            config =
-                                {
-                                    allowUnfree = true ;
-                                    android_sdk.accept_license = true ;
-                                } ;
                         } ;
                 in
                     {
@@ -89,10 +80,9 @@
                                         {
                                             modules =
                                                 [
-                                                    ./hardware-configuration.nix
                                                     personal_.implementation
-                                                    ./user.nix
-                                                    ./foobar.nix
+                                                    ./personal.nix
+                                                    ./system.nix
                                                 ] ;
                                             system = system ;
                                         } ;
