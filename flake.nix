@@ -23,6 +23,36 @@
                                                         {
                                                             promoter =
                                                                 {
+                                                                    action =
+                                                                        {
+                                                                            default =
+                                                                                config.lazy-shell-application
+                                                                                    {
+                                                                                        mounts =
+                                                                                            {
+                                                                                                lock = { is-directory = false ; source = "/tmp/promoter.lock" ; type = "bind" ; } ;
+                                                                                                work = { type = "temporary" ; } ; } ;
+                                                                                        name = "action" ;
+                                                                                        post = [ ] ;
+                                                                                        runtime-inputs = { pkgs , ... } : [ pkgs.coreutils pkgs.flock pkgs.git ] ;
+                                                                                        text =
+                                                                                            ''
+                                                                                                cd /mounts/work
+                                                                                                exec 154> /mounts/lock
+                                                                                                flock -x 154
+                                                                                                git init
+                                                                                                export GIT_SSH_COMMAND ""
+                                                                                                git config user.email ""
+                                                                                                git config user.name ""
+                                                                                                git remote add origin
+                                                                                                git fetch origin
+                                                                                                git checkout origin/
+
+                                                                                            '' ;
+                                                                                        variables = { } ;
+                                                                                    } ;
+                                                                            type = lib.types.package ;
+                                                                        } ;
                                                                     actions =
                                                                         {
                                                                             restore =
