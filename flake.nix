@@ -23,242 +23,476 @@
                                                         {
                                                             promoter =
                                                                 {
-                                                                    actions =
-                                                                        {
-                                                                            restore =
-                                                                                lib.mkOption
-                                                                                    {
-                                                                                        default =
-                                                                                            config.lazy-shell-application
-                                                                                                {
-                                                                                                    mounts = { } ;
-                                                                                                    name = "restore" ;
-                                                                                                    post = [ ] ;
-                                                                                                    runtime-inputs =
-                                                                                                        { pkgs , ... } :
-                                                                                                            [
-                                                                                                                pkgs.git
-                                                                                                                (
-                                                                                                                    pkgs.writeShellApplication
-                                                                                                                        {
-                                                                                                                            name = "restore" ;
-                                                                                                                            runtimeInputs = [ pkgs.git ] ;
-                                                                                                                            text =
-                                                                                                                                ''
-                                                                                                                                    git fetch origin main
-                                                                                                                                    git checkout origin/main
-                                                                                                                                '' ;
-                                                                                                                        }
-                                                                                                                )
-                                                                                                            ] ;
-                                                                                                    text =
-                                                                                                        ''
-                                                                                                            git submodule foreach 'restore'
-                                                                                                        '' ;
-                                                                                                    variables = { } ;
-                                                                                                } ;
-                                                                                        type = lib.types.package ;
-                                                                                    } ;
-                                                                            post =
-                                                                                lib.mkOption
-                                                                                    {
-                                                                                        default =
+                                                                    default =
+                                                                        pkgs.writeShellApplication
+                                                                            {
+                                                                                name = "action" ;
+                                                                                runtimeInputs =
+                                                                                    [
+                                                                                        pkgs.coreutils
+                                                                                        (
                                                                                             config.lazy-shell-application
                                                                                                 {
                                                                                                     mounts =
                                                                                                         {
-                                                                                                            dot-ssh = { type = "temporary" ; } ;
-                                                                                                            work = { type = "temporary" ; } ;
+                                                                                                            list = { is-directory = false ; source = "/tmp/promoter.txt" ; type = "bind" ; } ;
+                                                                                                            lock = { is-directory = false ; source = "/tmp/promoter.lock" ; type = "bind" ; } ;
                                                                                                         } ;
-                                                                                                    name = "promote" ;
-                                                                                                    post = [ ] ;
-                                                                                                    runtime-inputs =
-                                                                                                        { config , pkgs , ... } :
-                                                                                                            [
-                                                                                                                ( config.failure { } )
-                                                                                                                pkgs.coreutils
-                                                                                                                pkgs.git
-                                                                                                                (
-                                                                                                                    pkgs.writeShellApplication
-                                                                                                                        {
-                                                                                                                            name = "process-candidate" ;
-                                                                                                                            runtimeInputs =
-                                                                                                                                [
-                                                                                                                                    pkgs.git
-                                                                                                                                    pkgs.nix
-                                                                                                                                    (
-                                                                                                                                        pkgs.writeShellApplication
-                                                                                                                                            {
-                                                                                                                                                name = "cleanup" ;
-                                                                                                                                                runtimeInputs =
-                                                                                                                                                    [
-                                                                                                                                                        ( config.failure { } )
-                                                                                                                                                        pkgs.git
-                                                                                                                                                        (
-                                                                                                                                                            pkgs.writeShellApplication
-                                                                                                                                                                {
-                                                                                                                                                                    name = "promote" ;
-                                                                                                                                                                    runtimeInputs = [ pkgs.git ] ;
-                                                                                                                                                                    text =
-                                                                                                                                                                        ''
-                                                                                                                                                                            ALPHA="$(git rev-parse HEAD)" || failure 2893839237126451
-                                                                                                                                                                            BETA="$(git rev-parse origin/main)" || failure 8787959431289203
-                                                                                                                                                                            if [[ "$ALPHA" != "$BETA" ]]
-                                                                                                                                                                            then
-                                                                                                                                                                                if git push origin HEAD:main
-                                                                                                                                                                                then
-                                                                                                                                                                                    UUID="$( tr -dc '0-9' < /dev/urandom | fold -w 16 | head --lines 1 )" || failure 1962589628164118
-                                                                                                                                                                                    git checkout -b "success/$UUID"
-                                                                                                                                                                                    git push origin "success/$UUID"
-                                                                                                                                                                                    git push origin --delete "$REF"
-                                                                                                                                                                                else
-                                                                                                                                                                                    UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 0387526746530622
-                                                                                                                                                                                    git checkout -b "rejected/$UUID"
-                                                                                                                                                                                    git push origin "rejected/$UUID"
-                                                                                                                                                                                    git push origin --delete "$REF"
-                                                                                                                                                                                fi
-                                                                                                                                                                            elif git diff --quiet origin/main HEAD
-                                                                                                                                                                            then
-                                                                                                                                                                                UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 3801835872555108
-                                                                                                                                                                                git checkout -b "duplicate/$UUID"
-                                                                                                                                                                                git push origin "duplicate/$UUID"
-                                                                                                                                                                                git push origin --delete "$REF"
-                                                                                                                                                                            fi
-                                                                                                                                                                        '' ;
-                                                                                                                                                                }
-                                                                                                                                                        )
-                                                                                                                                                    ] ;
-                                                                                                                                                text =
-                                                                                                                                                    ''
-                                                                                                                                                        STATUS="$?"
-                                                                                                                                                        if [[ "$STATUS" == 0 ]]
-                                                                                                                                                        then
-                                                                                                                                                            git submodule foreach 'promote'
-                                                                                                                                                        else
-                                                                                                                                                            UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 9910674273434369
-                                                                                                                                                            git checkout -b "failure/$UUID"
-                                                                                                                                                            git push origin "failure/$UUID"
-                                                                                                                                                            git push origin --delete "$REF"
-                                                                                                                                                        fi
-                                                                                                                                                    '' ;
-                                                                                                                                            }
-                                                                                                                                    )
-                                                                                                                                    (
-                                                                                                                                        pkgs.writeShellApplication
-                                                                                                                                            {
-                                                                                                                                                name = "detect-override" ;
-                                                                                                                                                runtimeInputs = [ pkgs.git ] ;
-                                                                                                                                                text =
-                                                                                                                                                    ''
-                                                                                                                                                        if ! git diff --quiet origin/main HEAD
-                                                                                                                                                        then
-                                                                                                                                                            # shellcheck disable=SC2154
-                                                                                                                                                            echo "$name"
-                                                                                                                                                        fi
-                                                                                                                                                    '' ;
-                                                                                                                                            }
-                                                                                                                                    )
-                                                                                                                                ] ;
-                                                                                                                            text =
-                                                                                                                                ''
-                                                                                                                                    REF="$1"
-                                                                                                                                    git fetch origin main
-                                                                                                                                    git checkout "$REF"
-                                                                                                                                    git rebase origin/main
-                                                                                                                                    git submodule update --init --recursive
-                                                                                                                                    OVERRIDES=()
-                                                                                                                                    git submodule foreach 'git fetch origin main'
-                                                                                                                                    git submodule foreach 'detect-overrides'
-                                                                                                                                    for (( CHECK=1; CHECK<=NUMBER_OF_CHECKS; CHECK++ ))
-                                                                                                                                    do
-                                                                                                                                        time timeout ${ builtins.toString config.promoter.personal.timeout } nix build "${ "$" }{OVERRIDES[@]}" --show-trace ".#checks.x86_64-linux.check-$CHECK"
-                                                                                                                                    done
-                                                                                                                                    time timeout ${ builtins.toString config.promoter.personal.timeout } nix flake check --show-trace "${ "$" }{OVERRIDES[@]}"
-                                                                                                                                '' ;
-                                                                                                                        }
-                                                                                                                )
-                                                                                                            ] ;
-                                                                                                    text =
-                                                                                                        ''
-                                                                                                            cd /mounts/work
-                                                                                                            git init
-                                                                                                            git remote add origin "github.com:${ config.promoter.personal.organization }/${ config.promoter.personal.repository }.git"
-                                                                                                            cat ${ config.promoter.personal.committer.key } > /mounts/dot-ssh/identity.asc
-                                                                                                            chmod 0400 /mounts/dot-ssh/identity.asc
-                                                                                                            export GIT_SSH_COMMAND="${ pkgs.openssh }/bin/ssh -i /mounts/dot-ssh/identity.asc -o StrictHostKeyChecking=no -o User=git"
-                                                                                                            git config user.email "${ config.promoter.personal.committer.email }"
-                                                                                                            git config user.name "${ config.promoter.personal.committer.name }"
-                                                                                                            git fetch origin main
-                                                                                                            git submodule update --init --recursive
-                                                                                                            # shellcheck disable=SC2016
-                                                                                                            git submodule foreach 'git config core.sshCommand "$GIT_SSH_COMMAND"'
-                                                                                                            git submodule foreach 'git config user.email "${ config.promoter.personal.committer.email }"'
-                                                                                                            git submodule foreach 'git config user.name "${ config.promoter.personal.committer.name }"'
-                                                                                                            while IFS= read -r REF
-                                                                                                            do
-                                                                                                                process-candidate "$REF"
-                                                                                                            done < <( git for-each-ref --format='%(refname)' refs/remotes/origin/candidate/ )
-                                                                                                        '' ;
-                                                                                                    variables = { } ;
-                                                                                                } ;
-                                                                                        type = lib.types.package ;
-                                                                                    } ;
-                                                                            pre =
-                                                                                lib.mkOption
-                                                                                    {
-                                                                                        default =
-                                                                                            config.lazy-shell-application
-                                                                                                {
-                                                                                                    mounts = { } ;
-                                                                                                    name = "pre-commit" ;
-                                                                                                    post = [ ] ;
+                                                                                                    name = "queue" ;
+                                                                                                    post =
+                                                                                                        [
+                                                                                                            (
+                                                                                                                let
+                                                                                                                    application =
+                                                                                                                        config.lazy-shell-application
+                                                                                                                            {
+                                                                                                                                mounts =
+                                                                                                                                    {
+                                                                                                                                        list = { is-directory = false ; source = "/tmp/promoter.txt" ; type = "bind" ; } ;
+                                                                                                                                        lock = { is-directory = false ; source = "/tmp/promoter.lock" ; type = "bind" ; } ;
+                                                                                                                                        temporary = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                    } ;
+                                                                                                                                name = "process-candidate" ;
+                                                                                                                                post = [ ] ;
+                                                                                                                                runtime-inputs =
+                                                                                                                                    { pkgs , ... } :
+                                                                                                                                        [
+                                                                                                                                            ( config.failure { } )
+                                                                                                                                            pkgs.coreutils
+                                                                                                                                            pkgs.flock
+                                                                                                                                            (
+                                                                                                                                                config.lazy-shell-application
+                                                                                                                                                    {
+                                                                                                                                                        mounts =
+                                                                                                                                                            {
+                                                                                                                                                                "log.yaml" = { is-directory = false ; source = "/tmp/promoter.yaml" ; type = "bind" ; } ;
+                                                                                                                                                                lock = { is-directory = false ; source = "/tmp/promoter-2.lock" ; type = "bind" ; } ;
+                                                                                                                                                            } ;
+                                                                                                                                                        name = "process-candidate" ;
+                                                                                                                                                        post = [ ] ;
+                                                                                                                                                        runtime-inputs =
+                                                                                                                                                            { pkgs , ... } :
+                                                                                                                                                                let
+                                                                                                                                                                    timeout =
+                                                                                                                                                                        failure :
+                                                                                                                                                                            pkgs.writeShellApplication
+                                                                                                                                                                                {
+                                                                                                                                                                                    name = "extract-timeout" ;
+                                                                                                                                                                                    runtimeInputs = [ ] ;
+                                                                                                                                                                                    text =
+                                                                                                                                                                                        ''
+                                                                                                                                                                                            while [[ "$#" -lt 0 ]]
+                                                                                                                                                                                            do
+                                                                                                                                                                                                case "$1" in
+                                                                                                                                                                                                    --identity)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 9680512020238210 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --override-input)
+                                                                                                                                                                                                        if [[ "$#" -lt 3 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7635300019148429 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 3
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --timeout)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 8047149935848509 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        if [[ -n "$TIMEOUT" ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7860240520430827 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        TIMEOUT="$2"
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    *)
+                                                                                                                                                                                                        failure 4335486007730127 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                esac
+                                                                                                                                                                                            done
+                                                                                                                                                                                            if [[ -z "$FAILURE" ]]
+                                                                                                                                                                                            then
+                                                                                                                                                                                                echo -n 86400
+                                                                                                                                                                                            else
+                                                                                                                                                                                                echo -n "$TIMEOUT"
+                                                                                                                                                                                            fi
+                                                                                                                                                                                        '' ;
+                                                                                                                                                                                } ;
+                                                                                                                                                                    verify-inputs =
+                                                                                                                                                                        failure :
+                                                                                                                                                                            pkgs.writeShellApplication
+                                                                                                                                                                                {
+                                                                                                                                                                                    name = "verify-inputs" ;
+                                                                                                                                                                                    runtimeInputs = [ ( config.failure ) pkgs.awkutils pkgs.coreutils pkgs.git ] ;
+                                                                                                                                                                                    text =
+                                                                                                                                                                                        ''
+                                                                                                                                                                                            declare -A SEEN_INPUTS
+                                                                                                                                                                                            while [[ "$#" -gt 0 ]]
+                                                                                                                                                                                            do
+                                                                                                                                                                                                case "$1" in
+                                                                                                                                                                                                    --identity)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7198974479630792 "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --override-input)
+                                                                                                                                                                                                        if [[ "$#" -lt 3 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 8712000318384001 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        INPUT="$2"
+                                                                                                                                                                                                        FLAKE_REF="$3"
+                                                                                                                                                                                                        if [[ -v "SEEN_INPUTS[$INPUT]" ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7616400968225803 ${ builtins.toString failure } "$INPUT" "$FLAKE_REF"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        mkdir --parents "/mounts/work/verify-inputs/${ builtins.toString failure }/$INPUT/$FLAKE_REF"
+                                                                                                                                                                                                        cd "/mounts/work/verify-inputs/${ builtins.toString failure }/$INPUT/$FLAKE_REF"
+                                                                                                                                                                                                        git init
+                                                                                                                                                                                                        FLAKE_URL="$( awk -v input="$INPUT" '$1 == input ".url" { gsub(/[";]/, "", $3) ; print $3 }' ${ ./config/flake.nix } )" || failure ${ builtins.toString failure } 6106787716535623
+                                                                                                                                                                                                        case "$FLAKE_URL" in
+                                                                                                                                                                                                            github:*)
+                                                                                                                                                                                                                FLAKE_SSH_URL="git@github.com:${ "$" }{FLAKE_URL#github:}.git"
+                                                                                                                                                                                                                ;;
+                                                                                                                                                                                                            *)
+                                                                                                                                                                                                                failure 2132629620155012 ${ builtins.toString failure } "$INPUT" "$FLAKE_URL"
+                                                                                                                                                                                                                ;;
+                                                                                                                                                                                                        esac
+                                                                                                                                                                                                        git remote add origin "$FLAKE_SSH_URL"
+                                                                                                                                                                                                        git fetch origin main
+                                                                                                                                                                                                        git fetch origin "$FLAKE_REF"
+                                                                                                                                                                                                        if ! time timeout ${ builtins.toString config.promoter.personal.timeout } git merge-base --is-ancestor origin/main "origin/$FLAKE_REF"
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 3699464702500510 ${ builtins.toString failure } "$INPUT" "$FLAKE_REF" "$FLAKE_URL" "$FLAKE_SSH_URL"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        SEEN_INPUTS["$INPUT"]=1
+                                                                                                                                                                                                        shift 3
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --timeout)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7892245586736506 "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                    *)
+                                                                                                                                                                                                        failure 2758365734670044 "$@"
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                esac
+                                                                                                                                                                                            done
+                                                                                                                                                                                        '' ;
+                                                                                                                                                                                } ;
+                                                                                                                                                                    in
+                                                                                                                                                                        [
+                                                                                                                                                                            pkgs.flock
+                                                                                                                                                                            (
+                                                                                                                                                                                config.lazy-shell-application
+                                                                                                                                                                                    {
+                                                                                                                                                                                        mounts =
+                                                                                                                                                                                            {
+                                                                                                                                                                                                "log.yaml" = { source = "/mounts/log.yaml" ; type = "bind" ; } ;
+                                                                                                                                                                                            } ;
+                                                                                                                                                                                        name = "failure-candidate" ;
+                                                                                                                                                                                        post = [ ] ;
+                                                                                                                                                                                        runtime-inputs = { pkgs , ... } : [ ( config.failure { } ) pkgs.coreutils ( verify-inputs 6873280773848565 ) ] ;
+                                                                                                                                                                                        text =
+                                                                                                                                                                                            ''
+                                                                                                                                                                                                TIMESTAMP="$( date +%s )" || failure 2131060546120731
+                                                                                                                                                                                                jq \
+                                                                                                                                                                                                    --null-input \
+                                                                                                                                                                                                    --sort-keys \
+                                                                                                                                                                                                    --arg SCRIPT "$0" \
+                                                                                                                                                                                                    --argjson TIMESTAMP "$TIMESTAMP" \
+                                                                                                                                                                                                    --args \
+                                                                                                                                                                                                    '[
+                                                                                                                                                                                                        {
+                                                                                                                                                                                                            "arguments" : $ARGS.positional ,
+                                                                                                                                                                                                            "script" : $SCRIPT ,
+                                                                                                                                                                                                            "timestamp" : $TIMESTAMP
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                    ]' "$@" | yq eval --prettyPrint >> /mounts/log.yaml
+                                                                                                                                                                                            '' ;
+                                                                                                                                                                                        variables = { } ;
+                                                                                                                                                                                    }
+                                                                                                                                                                            )
+                                                                                                                                                                            (
+                                                                                                                                                                                config.lazy-shell-application
+                                                                                                                                                                                    {
+                                                                                                                                                                                        mounts =
+                                                                                                                                                                                            {
+                                                                                                                                                                                                log-flake-check-standard-error = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-flake-check-standard-output = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-verify-inputs-standard-error = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-verify-inputs-standard-output = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                "log.yaml" = { source = "/mounts/log.yaml" ; type = "bind" ; } ;
+                                                                                                                                                                                                work = { type = "temporary" ; } ;
+                                                                                                                                                                                            } ;
+                                                                                                                                                                                        name = "test-candidate" ;
+                                                                                                                                                                                        post = [ ] ;
+                                                                                                                                                                                        runtime-inputs = { pkgs , ... } : [ ( config.failure { } ) pkgs.coreutils pkgs.git pkgs.jq pkgs.nix pkgs.yq-go ( extract-timeout 5850705811307304 ) ( verify-inputs 2763619251225455 ) ] ;
+                                                                                                                                                                                        text =
+                                                                                                                                                                                            ''
+                                                                                                                                                                                                cleanup() {
+                                                                                                                                                                                                    STATUS="$?"
+                                                                                                                                                                                                    TIMESTAMP="$( date +%s )" || failure 4403456455560930
+                                                                                                                                                                                                    jq \
+                                                                                                                                                                                                        --null-input \
+                                                                                                                                                                                                        --sort-keys \
+                                                                                                                                                                                                        --rawfile LOG_FLAKE_CHECK_STANDARD_ERROR /mounts/log-flake-check-standard-error \
+                                                                                                                                                                                                        --rawfile LOG_FLAKE_CHECK_STANDARD_OUTPUT /mounts/log-flake-check-standard-output \
+                                                                                                                                                                                                        --rawfile LOG_VERIFY_INPUTS_STANDARD_ERROR /mounts/log-verify-inputs-standard-error \
+                                                                                                                                                                                                        --rawfile LOG_VERIFY_INPUTS_STANDARD_OUTPUT /mounts/log-verify-inputs-standard-output \
+                                                                                                                                                                                                        --arg SCRIPT "$0" \
+                                                                                                                                                                                                        --argjson STATUS "$STATUS" \
+                                                                                                                                                                                                        --argjson TIMESTAMP "$TIMESTAMP" \
+                                                                                                                                                                                                        --args \
+                                                                                                                                                                                                        '[
+                                                                                                                                                                                                            {
+                                                                                                                                                                                                                "arguments" : $ARGS.positional ,
+                                                                                                                                                                                                                "script" : $SCRIPT ,
+                                                                                                                                                                                                                "flake-check" :
+                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                        "standard-error" : $LOG_FLAKE_CHECK_STANDARD_ERROR ,
+                                                                                                                                                                                                                        "standard-output" : $LOG_FLAKE_CHECK_STANDARD_OUTPUT
+                                                                                                                                                                                                                    } ,
+                                                                                                                                                                                                                "verify-inputs" :
+                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                        "standard-error" : $LOG_VERIFY_INPUTS_STANDARD_ERROR ,
+                                                                                                                                                                                                                        "standard-output" : $LOG_VERIFY_INPUTS_STANDARD_OUTPUT
+                                                                                                                                                                                                                    } ,
+                                                                                                                                                                                                                "status" : $STATUS ,
+                                                                                                                                                                                                                "timestamp" : $TIMESTAMP
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        ]' "$@" | yq eval --prettyPrint >> /mounts/log.yaml || true
+                                                                                                                                                                                                    exit "$STATUS"
+                                                                                                                                                                                                }
+                                                                                                                                                                                                trap cleanup EXIT
+                                                                                                                                                                                                verify-inputs "$@" > /mounts/log-verify-inputs-standard-output 2> /mounts/log-verify-inputs-standard-error
+                                                                                                                                                                                                cd /mounts/work
+                                                                                                                                                                                                git init
+                                                                                                                                                                                                cat ${ ./config/flake.nix } > flake.nix
+                                                                                                                                                                                                cat ${ ./config/nixpkgs.nix } > nixpkgs.nix
+                                                                                                                                                                                                cat ${ ./config/personal.nix } > personal.nix
+                                                                                                                                                                                                cat ${ ./config/promoter.nix } > promoter.nix
+                                                                                                                                                                                                cat ${ ./config/system.nix } > system.nix
+                                                                                                                                                                                                cat ${ ./config/visa.nix } > visa.nix
+                                                                                                                                                                                                git add flake.nix nixpkgs.nix personal.nix promoter.nix system.nix
+                                                                                                                                                                                                TIMEOUT="$( extract-timeout "$@" )" || failure 4495567215883536
+                                                                                                                                                                                                time timeout $TIMEOUT" nix flake check "$@" > /mounts/log-flake-check-standard-output 2> /mounts/log-flake-check-standard-error
+                                                                                                                                                                                            '' ;
+                                                                                                                                                                                        variables = { } ;
+                                                                                                                                                                                    }
+                                                                                                                                                                            )
+                                                                                                                                                                            (
+                                                                                                                                                                                config.lazy-shell-application
+                                                                                                                                                                                    {
+                                                                                                                                                                                        mounts =
+                                                                                                                                                                                            {
+                                                                                                                                                                                                dot-ssh = { type = "temporary" ; } ;
+                                                                                                                                                                                                log-verify-inputs-standard-error = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-verify-inputs-standard-output = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-promote-standard-error = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                log-promote-standard-output = { is-directory = false ; type = "temporary" ; } ;
+                                                                                                                                                                                                "log.yaml" = { source = "/mounts/log.yaml" ; type = "bind" ; } ;
+                                                                                                                                                                                                work = { type = "temporary" ; } ;
+                                                                                                                                                                                            } ;
+                                                                                                                                                                                        name = "success-candidate" ;
+                                                                                                                                                                                        post = [ ] ;
+                                                                                                                                                                                        runtime-inputs = { pkgs , ... } : [ ( config.failure { } ) pkgs.coreutils ( extract-timeout 0440445674227486 ) ( verify-inputs 6873280773848565 ) ] ;
+                                                                                                                                                                                        text =
+                                                                                                                                                                                            ''
+                                                                                                                                                                                                ORIGINAL_ARGS=("$@")
+                                                                                                                                                                                                cleanup() {
+                                                                                                                                                                                                    STATUS="$?"
+                                                                                                                                                                                                    TIMESTAMP="$( date +%s )" || failure 4686541221118442
+                                                                                                                                                                                                    jq \
+                                                                                                                                                                                                        --null-input \
+                                                                                                                                                                                                        --rawfile LOG_VERIFY_INPUTS_STANDARD_ERROR /mounts/log-verify-inputs-standard-error \
+                                                                                                                                                                                                        --rawfile LOG_VERIFY_INPUTS_STANDARD_OUTPUT /mounts/log-verify-inputs-standard-output \
+                                                                                                                                                                                                        --arg SCRIPT "$0" \
+                                                                                                                                                                                                        --argjson STATUS "$STATUS" \
+                                                                                                                                                                                                        --argjson TIMESTAMP "$TIMESTAMP" \
+                                                                                                                                                                                                        --args \
+                                                                                                                                                                                                        '[
+                                                                                                                                                                                                            {
+                                                                                                                                                                                                                "arguments" : $ARGS.positional ,
+                                                                                                                                                                                                                "verify-inputs" :
+                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                        "standard-error" : $LOG_VERIFY_INPUTS_STANDARD_ERROR ,
+                                                                                                                                                                                                                        "standard-output" : $LOG_VERIFY_INPUTS_STANDARD_OUTPUT
+                                                                                                                                                                                                                    } ,
+                                                                                                                                                                                                                "script" : $SCRIPT ,
+                                                                                                                                                                                                                "status" : $STATUS ,
+                                                                                                                                                                                                                "timestamp" : $TIMESTAMP
+                                                                                                                                                                                                            }
+                                                                                                                                                                                                        ]' "${ "$" }{ORIGINAL_ARGS[@]}" | yq eval --prettyPrint >> /mounts/log.yaml || true
+                                                                                                                                                                                                    exit "$STATUS"
+                                                                                                                                                                                                }
+                                                                                                                                                                                                trap cleanup EXIT
+                                                                                                                                                                                                verify-inputs "$@" > /mounts/log-verify-inputs-standard-output 2> /mounts/log-verify-inputs-standard-error
+                                                                                                                                                                                                TIMEOUT="$( extract-timeout "$@" )" || failure 0758728069227938
+                                                                                                                                                                                                cat > /mounts/dot-ssh <<EOF
+                                                                                                                                                                                                Host github.com
+                                                                                                                                                                                                User git
+                                                                                                                                                                                                IdentityFile /mounts/dot-ssh/identity
+                                                                                                                                                                                                UserKnownHostsFile /mounts/dot-ssh/known-hosts
+                                                                                                                                                                                                StrictHostKeyChecking no
+                                                                                                                                                                                                EOF
+                                                                                                                                                                                                chmod 0700 /mounts/dot-ssh
+                                                                                                                                                                                                while [[ "$#" -gt 0 ]]
+                                                                                                                                                                                                do
+                                                                                                                                                                                                    case "$1" in
+                                                                                                                                                                                                        --identity)
+                                                                                                                                                                                                            if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 7011894971397015
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            if [[ -e /mounts/dot-ssh/identity ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 8126750884079075
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            IDENTITY="$2"
+                                                                                                                                                                                                            echo "$IDENTITY" > /mounts/dot-ssh/identity
+                                                                                                                                                                                                            chmod 0400 /mounts/dot-ssh/identity
+                                                                                                                                                                                                            shift 2
+                                                                                                                                                                                                            ;;
+                                                                                                                                                                                                        --override-input)
+                                                                                                                                                                                                            if [[ "$#" -lt 3 ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 7792943012687611 "$@"
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            if [[ ! f /mounts/dot-ssh/identity ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 0181553345914754
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            INPUT="$2"
+                                                                                                                                                                                                            FLAKE_REF="$3"
+                                                                                                                                                                                                            mkdir --parents "/mounts/work/success-candidate/$INPUT/$FLAKE_REF"
+                                                                                                                                                                                                            cd "/mounts/work/success-candidate/$INPUT/$FLAKE_REF"
+                                                                                                                                                                                                            git init
+                                                                                                                                                                                                            FLAKE_URL="$( awk -v input="$INPUT" '$1 == input ".url" { gsub(/[";]/, "", $3) ; print $3 }' ${ ./config/flake.nix } )" || failure 5800237750793123
+                                                                                                                                                                                                            case "$FLAKE_URL" in
+                                                                                                                                                                                                                github:*)
+                                                                                                                                                                                                                    FLAKE_SSH_URL="git@github.com:${ "$" }{FLAKE_URL#github:}.git"
+                                                                                                                                                                                                                    ;;
+                                                                                                                                                                                                                *)
+                                                                                                                                                                                                                    failure 6577158659239693 "$INPUT" "$FLAKE_URL"
+                                                                                                                                                                                                                    ;;
+                                                                                                                                                                                                            esac
+                                                                                                                                                                                                            git remote add origin "$FLAKE_SSH_URL"
+                                                                                                                                                                                                            git fetch origin main
+                                                                                                                                                                                                            git fetch origin "$FLAKE_REF"
+                                                                                                                                                                                                            if time timeout "$TIMEOUT" git push origin "refs/heads/$FLAKE_REF:refs/heads/main" > /mounts/log-promote-standard-output 2> /mounts/log-promote-standard-error
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                STATUS="$?"
+                                                                                                                                                                                                            else
+                                                                                                                                                                                                                STATUS="$?"
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            TIMESTAMP="$( date +%s )" || failure 3279756893357265
+                                                                                                                                                                                                            jq \
+                                                                                                                                                                                                                --null-input \
+                                                                                                                                                                                                                --arg FLAKE_REF "$FLAKE_REF" \
+                                                                                                                                                                                                                --arg INPUT "$INPUT" \
+                                                                                                                                                                                                                --rawfile LOG_PROMOTE_STANDARD_ERROR /mounts/log-promote-standard-error \
+                                                                                                                                                                                                                --rawfile LOG_PROMOTE_STANDARD_OUTPUT /mounts/log-promote-standard-output \
+                                                                                                                                                                                                                --arg SCRIPT "$0" \
+                                                                                                                                                                                                                --argjson STATUS "$STATUS" \
+                                                                                                                                                                                                                '[
+                                                                                                                                                                                                                    {
+                                                                                                                                                                                                                        "flake-ref" : $FLAKE_REF ,
+                                                                                                                                                                                                                        "input" : $INPUT ,
+                                                                                                                                                                                                                        "promote" :
+                                                                                                                                                                                                                            {
+                                                                                                                                                                                                                                "standard-error" : $LOG_PROMOTE_STANDARD_ERROR ,
+                                                                                                                                                                                                                                "standard-output" : $LOG_PROMOTE_STANDARD_OUTPUT
+                                                                                                                                                                                                                            } ,
+                                                                                                                                                                                                                        "script" : $SCRIPT ,
+                                                                                                                                                                                                                        "status" : $STATUS ,
+                                                                                                                                                                                                                        "timestamp" : $TIMESTAMP
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                ]' | yq eval --prettyPrint >> /mounts/log.yaml || true
+                                                                                                                                                                                                            if [[ "$STATUS" != 0 ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 6671477303488324 "$STATUS" "$INPUT" "$FLAKE_REF" "$FLAKE_URL" "$FLAKE_SSH_URL"
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            shift 3
+                                                                                                                                                                                                            ;;
+                                                                                                                                                                                                        --timeout)
+                                                                                                                                                                                                            if [[ "$#" -lt 1 ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 2191754731581915 "$@"
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            shift 2
+                                                                                                                                                                                                            ;;
+                                                                                                                                                                                                        *)
+                                                                                                                                                                                                            failure 5605724406678642 "$@"
+                                                                                                                                                                                                            ;;
+                                                                                                                                                                                                    esac
+                                                                                                                                                                                                done
+                                                                                                                                                                                            '' ;
+                                                                                                                                                                                        variables = { } ;
+                                                                                                                                                                                    }
+                                                                                                                                                                            )
+                                                                                                                                                                        ] ;
+                                                                                                                                                        text =
+                                                                                                                                                            ''
+                                                                                                                                                                exec 138> /mounts/lock
+                                                                                                                                                                flock -x 138
+                                                                                                                                                                if nice --adjustment 19 test-candidate "$ITEM"
+                                                                                                                                                                then
+                                                                                                                                                                    nice --adjustment 19 success-candidate "$ITEM"
+                                                                                                                                                                else
+                                                                                                                                                                    nice --adjustment 19 failure-candidate "$ITEM"
+                                                                                                                                                                fi
+                                                                                                                                                            '' ;
+                                                                                                                                                        variables = { } ;
+                                                                                                                                                    }
+                                                                                                                                            )
+                                                                                                                                        ] ;
+                                                                                                                                text =
+                                                                                                                                    ''
+                                                                                                                                        exec 133> /mounts/lock
+                                                                                                                                        flock -x 133
+                                                                                                                                        if [[ -s /mounts/list ]]
+                                                                                                                                        then
+                                                                                                                                            ITEM="$( head --lines 1 /mounts/list )" || failure 5563603558226371
+                                                                                                                                            nohup nice --adjustment 19 process-candidate "$ITEM" &
+                                                                                                                                            tail --lines +2 /mounts/list > /mounts/temporary
+                                                                                                                                            mv /mounts/temporary /mounts/list
+                                                                                                                                        fi
+                                                                                                                                    '' ;
+                                                                                                                            } ;
+                                                                                                                    in "${ application }/bin/process-candidate"
+                                                                                                            )
+                                                                                                        ] ;
                                                                                                     runtime-inputs =
                                                                                                         { pkgs , ... } :
                                                                                                             [
-                                                                                                                pkgs.git
-                                                                                                                (
-                                                                                                                    pkgs.writeShellApplication
-                                                                                                                        {
-                                                                                                                            name = "pre-commit" ;
-                                                                                                                            runtimeInputs = [ ] ;
-                                                                                                                            text =
-                                                                                                                                ''
-                                                                                                                                    git fetch origin main
-                                                                                                                                    if ! git diff --quiet origin/main HEAD
-                                                                                                                                    then
-                                                                                                                                        UUID="$( tr -dc '0-9' < /dev/urandom| fold -w 16 | head --lines 1 )" || failure 9910674273434369
-                                                                                                                                        git checkout -b "candidate/$UUID"
-                                                                                                                                        git reset --soft origin/main
-                                                                                                                                        git commit -a --verbose
-                                                                                                                                        git push origin "candidate/$UUID"
-                                                                                                                                    fi
-                                                                                                                                '' ;
-                                                                                                                        }
-                                                                                                                )
+                                                                                                                pkgs.flock
                                                                                                             ] ;
                                                                                                     text =
                                                                                                         ''
-                                                                                                            git submodule foreach "submodule-precommit.sh"
-                                                                                                            git add .
+                                                                                                            exec 151> /mounts/lock
+                                                                                                            flock -x 151
+                                                                                                            echo "$@" >> /mounts/list
                                                                                                         '' ;
                                                                                                     variables = { } ;
-                                                                                                } ;
-                                                                                        type = lib.types.package ;
-                                                                                    } ;
-                                                                        } ;
-                                                                    personal =
-                                                                        {
-                                                                            committer =
-                                                                                {
-                                                                                    email = lib.mkOption { default = "emory.merryman@gmail.com" ; type = lib.types.str ; } ;
-                                                                                    key = lib.mkOption { type = lib.types.path ; } ;
-                                                                                    name = lib.mkOption { default = "Emory Merryman" ; type = lib.types.str ; } ;
-                                                                                } ;
-                                                                            number-of-checks = lib.mkOption { default = 13 ; type = lib.types.int ; } ;
-                                                                            organization = lib.mkOption { default = "AFnRFCb7" ; type = lib.types.str ; } ;
-                                                                            repository = lib.mkOption { default = "personal" ; type = lib.types.str ; } ;
-                                                                            timeout = lib.mkOption { default = 60 * 60 ; type = lib.types.int ; } ;
-                                                                        } ;
+                                                                                                }
+                                                                                        )
+                                                                                    ] ;
+                                                                                text =
+                                                                                    ''
+                                                                                        nohup nice --adjustment 19 queue "$@" &
+                                                                                    '' ;
+                                                                            } ;
+                                                                    type = lib.types.package ;
                                                                 } ;
                                                         } ;
                                                 } ;
