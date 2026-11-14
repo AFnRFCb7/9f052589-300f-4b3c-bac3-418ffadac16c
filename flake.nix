@@ -23,6 +23,22 @@
                                                         {
                                                             promoter =
                                                                 {
+                                                                    action =
+                                                                        {
+                                                                            default =
+                                                                                config.lazy-shell-application
+                                                                                    {
+                                                                                        mounts = { work = { type = "temporary" ; } ; } ;
+                                                                                        name = "action" ;
+                                                                                        post = [ ] ;
+                                                                                        runtime-inputs = { ... } : [ ] ;
+                                                                                        text =
+                                                                                            ''
+                                                                                            '' ;
+                                                                                        variables = { } ;
+                                                                                    } ;
+                                                                            type = lib.types.package ;
+                                                                        } ;
                                                                     actions =
                                                                         {
                                                                             restore =
