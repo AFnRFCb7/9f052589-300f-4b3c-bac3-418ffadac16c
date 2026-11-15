@@ -73,12 +73,71 @@
                                                                                                                                                         runtime-inputs =
                                                                                                                                                             { pkgs , ... } :
                                                                                                                                                                 let
+                                                                                                                                                                    post =
+                                                                                                                                                                        failure :
+                                                                                                                                                                            pkgs.writeShellApplication
+                                                                                                                                                                                {
+                                                                                                                                                                                    name = "extract-post" ;
+                                                                                                                                                                                    runtimeInputs = [ ( config.failure { } ) pkgs.coreutils ] ;
+                                                                                                                                                                                    text =
+                                                                                                                                                                                        ''
+                                                                                                                                                                                            while [[ "$#" -lt 0 ]]
+                                                                                                                                                                                            do
+                                                                                                                                                                                                case "$1" in
+                                                                                                                                                                                                    --identity)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 6785261414959105 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --override-input)
+                                                                                                                                                                                                        if [[ "$#" -lt 3 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7725416813466652 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 3
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --post)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 9701673746528490 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        POST="$2"
+                                                                                                                                                                                                        nohup nice --adjustment 19 ionice -c3 "$POST"
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --timeout)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 7487622163490248 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        if [[ -n "$TIMEOUT" ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 9754311928926539 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        TIMEOUT="$2"
+                                                                                                                                                                                                        shift 2
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    *)
+                                                                                                                                                                                                        failure 6832732174527287 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                esac
+                                                                                                                                                                                            done
+                                                                                                                                                                                            if [[ -z "$FAILURE" ]]
+                                                                                                                                                                                            then
+                                                                                                                                                                                                echo -n 86400
+                                                                                                                                                                                            else
+                                                                                                                                                                                                echo -n "$TIMEOUT"
+                                                                                                                                                                                            fi
+                                                                                                                                                                                        '' ;
+                                                                                                                                                                                } ;
                                                                                                                                                                     timeout =
                                                                                                                                                                         failure :
                                                                                                                                                                             pkgs.writeShellApplication
                                                                                                                                                                                 {
                                                                                                                                                                                     name = "extract-timeout" ;
-                                                                                                                                                                                    runtimeInputs = [ ] ;
+                                                                                                                                                                                    runtimeInputs = [ ( config.failure { } ) pkgs.coreutils ] ;
                                                                                                                                                                                     text =
                                                                                                                                                                                         ''
                                                                                                                                                                                             while [[ "$#" -lt 0 ]]
@@ -97,6 +156,13 @@
                                                                                                                                                                                                             failure 7635300019148429 ${ builtins.toString failure } "$@"
                                                                                                                                                                                                         fi
                                                                                                                                                                                                         shift 3
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --post)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 6834640940754922 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
                                                                                                                                                                                                         ;;
                                                                                                                                                                                                     --timeout)
                                                                                                                                                                                                         if [[ "$#" -lt 2 ]]
@@ -128,7 +194,7 @@
                                                                                                                                                                             pkgs.writeShellApplication
                                                                                                                                                                                 {
                                                                                                                                                                                     name = "verify-inputs" ;
-                                                                                                                                                                                    runtimeInputs = [ ( config.failure ) pkgs.awkutils pkgs.coreutils pkgs.git ] ;
+                                                                                                                                                                                    runtimeInputs = [ ( config.failure { } ) pkgs.awkutils pkgs.coreutils pkgs.git ] ;
                                                                                                                                                                                     text =
                                                                                                                                                                                         ''
                                                                                                                                                                                             declare -A SEEN_INPUTS
@@ -174,6 +240,13 @@
                                                                                                                                                                                                         fi
                                                                                                                                                                                                         SEEN_INPUTS["$INPUT"]=1
                                                                                                                                                                                                         shift 3
+                                                                                                                                                                                                        ;;
+                                                                                                                                                                                                    --post)
+                                                                                                                                                                                                        if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                        then
+                                                                                                                                                                                                            failure 2510687869183691 ${ builtins.toString failure } "$@"
+                                                                                                                                                                                                        fi
+                                                                                                                                                                                                        shift 2
                                                                                                                                                                                                         ;;
                                                                                                                                                                                                     --timeout)
                                                                                                                                                                                                         if [[ "$#" -lt 2 ]]
@@ -305,7 +378,7 @@
                                                                                                                                                                                             } ;
                                                                                                                                                                                         name = "success-candidate" ;
                                                                                                                                                                                         post = [ ] ;
-                                                                                                                                                                                        runtime-inputs = { pkgs , ... } : [ ( config.failure { } ) pkgs.coreutils ( extract-timeout 0440445674227486 ) ( verify-inputs 6873280773848565 ) ] ;
+                                                                                                                                                                                        runtime-inputs = { pkgs , ... } : [ ( config.failure { } ) pkgs.coreutils ( extract-post 0805128057876206 ) ( extract-timeout 0440445674227486 ) ( verify-inputs 6873280773848565 ) ] ;
                                                                                                                                                                                         text =
                                                                                                                                                                                             ''
                                                                                                                                                                                                 ORIGINAL_ARGS=("$@")
@@ -333,6 +406,7 @@
                                                                                                                                                                                                                 "timestamp" : $TIMESTAMP
                                                                                                                                                                                                             }
                                                                                                                                                                                                         ]' "${ "$" }{ORIGINAL_ARGS[@]}" | yq eval --prettyPrint >> /mounts/log.yaml || true
+                                                                                                                                                                                                    extract-post "${ "$" }ORIGINAL_ARGS[@]}
                                                                                                                                                                                                     exit "$STATUS"
                                                                                                                                                                                                 }
                                                                                                                                                                                                 trap cleanup EXIT
@@ -424,6 +498,13 @@
                                                                                                                                                                                                             fi
                                                                                                                                                                                                             shift 3
                                                                                                                                                                                                             ;;
+                                                                                                                                                                                                        --post)
+                                                                                                                                                                                                            if [[ "$#" -lt 2 ]]
+                                                                                                                                                                                                            then
+                                                                                                                                                                                                                failure 9226850069331776 "$@"
+                                                                                                                                                                                                            fi
+                                                                                                                                                                                                            shift 2
+                                                                                                                                                                                                            ;;
                                                                                                                                                                                                         --timeout)
                                                                                                                                                                                                             if [[ "$#" -lt 1 ]]
                                                                                                                                                                                                             then
@@ -445,11 +526,11 @@
                                                                                                                                                             ''
                                                                                                                                                                 exec 138> /mounts/lock
                                                                                                                                                                 flock -x 138
-                                                                                                                                                                if nice --adjustment 19 test-candidate "$ITEM"
+                                                                                                                                                                if nice --adjustment 19 ionice -c 3 test-candidate "$ITEM"
                                                                                                                                                                 then
-                                                                                                                                                                    nice --adjustment 19 success-candidate "$ITEM"
+                                                                                                                                                                    nice --adjustment 19 ionice -c 3 success-candidate "$ITEM"
                                                                                                                                                                 else
-                                                                                                                                                                    nice --adjustment 19 failure-candidate "$ITEM"
+                                                                                                                                                                    nice --adjustment 19 ionice -c 3 failure-candidate "$ITEM"
                                                                                                                                                                 fi
                                                                                                                                                             '' ;
                                                                                                                                                         variables = { } ;
@@ -458,12 +539,22 @@
                                                                                                                                         ] ;
                                                                                                                                 text =
                                                                                                                                     ''
+                                                                                                                                        HOUR="$( date +%H )" || failure 0465505065803633
+                                                                                                                                        if (( 10#$HOUR >= 23 || 10#$HOUR < 7 ))
+                                                                                                                                        then
+                                                                                                                                            :
+                                                                                                                                        else
+                                                                                                                                            TARGET=$(date -d '23:00' +%s)
+                                                                                                                                            NOW=$(date +%s)
+                                                                                                                                            DELAY=$(( TARGET - NOW ))
+                                                                                                                                            sleep "$DELAY"
+                                                                                                                                        fi
                                                                                                                                         exec 133> /mounts/lock
                                                                                                                                         flock -x 133
                                                                                                                                         if [[ -s /mounts/list ]]
                                                                                                                                         then
                                                                                                                                             ITEM="$( head --lines 1 /mounts/list )" || failure 5563603558226371
-                                                                                                                                            nohup nice --adjustment 19 process-candidate "$ITEM" &
+                                                                                                                                            nohup nice --adjustment 19 ionice -c 3 process-candidate "$ITEM" &
                                                                                                                                             tail --lines +2 /mounts/list > /mounts/temporary
                                                                                                                                             mv /mounts/temporary /mounts/list
                                                                                                                                         fi
@@ -489,7 +580,7 @@
                                                                                     ] ;
                                                                                 text =
                                                                                     ''
-                                                                                        nohup nice --adjustment 19 queue "$@" &
+                                                                                        nohup nice --adjustment 19 ionice -c 3 queue "$@" &
                                                                                     '' ;
                                                                             } ;
                                                                     type = lib.types.package ;
