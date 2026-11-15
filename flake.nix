@@ -104,7 +104,7 @@
                                                                                                                                                                                                             failure 9701673746528490 ${ builtins.toString failure } "$@"
                                                                                                                                                                                                         fi
                                                                                                                                                                                                         POST="$2"
-                                                                                                                                                                                                        nohup nice --adjustment 19 ionice -c3 "$POST"
+                                                                                                                                                                                                        nohup nice --adjustment 19 "$POST"
                                                                                                                                                                                                         shift 2
                                                                                                                                                                                                         ;;
                                                                                                                                                                                                     --timeout)
@@ -526,11 +526,11 @@
                                                                                                                                                             ''
                                                                                                                                                                 exec 138> /mounts/lock
                                                                                                                                                                 flock -x 138
-                                                                                                                                                                if nice --adjustment 19 ionice -c 3 test-candidate "$ITEM"
+                                                                                                                                                                if nice --adjustment 19 test-candidate "$ITEM"
                                                                                                                                                                 then
-                                                                                                                                                                    nice --adjustment 19 ionice -c 3 success-candidate "$ITEM"
+                                                                                                                                                                    nice --adjustment 19 success-candidate "$ITEM"
                                                                                                                                                                 else
-                                                                                                                                                                    nice --adjustment 19 ionice -c 3 failure-candidate "$ITEM"
+                                                                                                                                                                    nice --adjustment 19 failure-candidate "$ITEM"
                                                                                                                                                                 fi
                                                                                                                                                             '' ;
                                                                                                                                                         variables = { } ;
@@ -539,22 +539,22 @@
                                                                                                                                         ] ;
                                                                                                                                 text =
                                                                                                                                     ''
-                                                                                                                                        HOUR="$( date +%H )" || failure 0465505065803633
-                                                                                                                                        if (( 10#$HOUR >= 23 || 10#$HOUR < 7 ))
-                                                                                                                                        then
-                                                                                                                                            :
-                                                                                                                                        else
-                                                                                                                                            TARGET=$(date -d '23:00' +%s)
-                                                                                                                                            NOW=$(date +%s)
-                                                                                                                                            DELAY=$(( TARGET - NOW ))
-                                                                                                                                            sleep "$DELAY"
-                                                                                                                                        fi
+#                                                                                                                                        HOUR="$( date +%H )" || failure 0465505065803633
+#                                                                                                                                        if (( 10#$HOUR >= 23 || 10#$HOUR < 7 ))
+#                                                                                                                                        then
+#                                                                                                                                            :
+#                                                                                                                                        else
+#                                                                                                                                            TARGET=$(date -d '23:00' +%s)
+#                                                                                                                                            NOW=$(date +%s)
+#                                                                                                                                            DELAY=$(( TARGET - NOW ))
+#                                                                                                                                            sleep "$DELAY"
+#                                                                                                                                        fi
                                                                                                                                         exec 133> /mounts/lock
                                                                                                                                         flock -x 133
                                                                                                                                         if [[ -s /mounts/list ]]
                                                                                                                                         then
                                                                                                                                             ITEM="$( head --lines 1 /mounts/list )" || failure 5563603558226371
-                                                                                                                                            nohup nice --adjustment 19 ionice -c 3 process-candidate "$ITEM" &
+                                                                                                                                            nohup nice --adjustment 19 process-candidate "$ITEM" &
                                                                                                                                             tail --lines +2 /mounts/list > /mounts/temporary
                                                                                                                                             mv /mounts/temporary /mounts/list
                                                                                                                                         fi
@@ -580,7 +580,7 @@
                                                                                     ] ;
                                                                                 text =
                                                                                     ''
-                                                                                        nohup nice --adjustment 19 ionice -c 3 queue "$@" &
+                                                                                        nohup nice --adjustment 19 queue "$@" &
                                                                                     '' ;
                                                                             } ;
                                                                     type = lib.types.package ;
